@@ -1,0 +1,282 @@
+/* OFAST Certificate System - Basic Styles */
+
+.ofst-cert-form-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.ofst-cert-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ofst-cert-title {
+    font-size: 28px;
+    color: #070244;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.ofst-cert-subtitle {
+    color: #666;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.ofst-cert-notice {
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.ofst-cert-notice.error {
+    background: #fee;
+    border-left: 4px solid #c00;
+    color: #c00;
+}
+
+.ofst-cert-notice.info {
+    background: #e7f3ff;
+    border-left: 4px solid #2196F3;
+    color: #0c5393;
+}
+
+.ofst-cert-notice.success {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+    color: #155724;
+}
+
+.ofst-cert-form .ofst-form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.ofst-cert-form .ofst-form-group {
+    margin-bottom: 20px;
+}
+
+.ofst-cert-form .ofst-form-group.ofst-half {
+    flex: 1;
+}
+
+.ofst-cert-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.ofst-cert-form input[type="text"],
+.ofst-cert-form input[type="email"],
+.ofst-cert-form input[type="tel"],
+.ofst-cert-form input[type="url"],
+.ofst-cert-form input[type="date"],
+.ofst-cert-form select,
+.ofst-cert-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.ofst-cert-form input:focus,
+.ofst-cert-form select:focus,
+.ofst-cert-form textarea:focus {
+    outline: none;
+    border-color: #070244;
+}
+
+.ofst-cert-form small {
+    display: block;
+    color: #666;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.ofst-cert-form .required {
+    color: #c00;
+}
+
+.ofst-cert-form .ofst-checkbox label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.ofst-cert-form .ofst-checkbox input[type="checkbox"] {
+    margin-top: 3px;
+    width: auto;
+}
+
+.ofst-form-actions {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.ofst-btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.ofst-btn-primary {
+    background: #070244;
+    color: #fff;
+}
+
+.ofst-btn-primary:hover {
+    background: #05031a;
+}
+
+.ofst-btn-back {
+    display: inline-block;
+    padding: 8px 15px;
+    background: #f5f5f5;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.ofst-btn-back:hover {
+    background: #e0e0e0;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .ofst-cert-form .ofst-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .ofst-cert-card {
+        padding: 20px;
+    }
+}
+
+/* Verification Results */
+.ofst-cert-result {
+    margin-top: 30px;
+    padding: 25px;
+    border-radius: 8px;
+    border: 2px solid;
+}
+
+.ofst-cert-result.success {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.ofst-cert-result.error {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.cert-details p {
+    margin: 10px 0;
+    font-size: 15px;
+}
+
+/* My Certificates Table */
+.ofst-cert-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.ofst-cert-table th,
+.ofst-cert-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.ofst-cert-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+}
+
+.ofst-cert-table tr:hover {
+    background: #f9f9f9;
+}
+
+.cert-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-issued {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.ofst-btn-small {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #070244;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.ofst-btn-small:hover {
+    background: #05031a;
+}
+
+.text-muted {
+    color: #999;
+    font-size: 13px;
+}
+
+/* Textarea */
+.ofst-cert-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.ofst-cert-back-btn {
+    margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+    .ofst-cert-table {
+        font-size: 13px;
+    }
+
+    .ofst-cert-table th,
+    .ofst-cert-table td {
+        padding: 8px 5px;
+    }
+}
