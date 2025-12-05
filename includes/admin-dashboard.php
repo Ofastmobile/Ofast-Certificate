@@ -7,6 +7,9 @@
 
 if (!defined('ABSPATH')) exit;
 
+// Load certificate generator
+require_once OFST_CERT_PLUGIN_DIR . 'includes/certificate-generator.php';
+
 /**
  * Add admin menu
  */
@@ -39,6 +42,15 @@ function ofst_cert_add_admin_menu()
         'manage_options',
         'ofst-certificates-issued',
         'ofst_cert_issued_page'
+    );
+
+    add_submenu_page(
+        'ofst-certificates',
+        'Failed Certificates',
+        'Failed Certificates',
+        'manage_options',
+        'ofst-certificates-failed',
+        'ofst_cert_failed_page'
     );
 
     add_submenu_page(
@@ -84,17 +96,35 @@ function ofst_cert_admin_dashboard()
     }
 
     // Handle single approval/rejection (not view)
+    if (isset($_POST['ofst_approve_cert']) && isset($_POST['cert_id'])) {
+        check_admin_referer('ofst_cert_approve_' . $_POST['cert_id']);
+
+        $cert_id = absint($_POST['cert_id']);
+        $completion_date = isset($_POST['completion_date']) ? sanitize_text_field($_POST['completion_date']) : date('Y-m-d');
+
+        $result = ofst_cert_approve_request($cert_id, $completion_date);
+
+        if ($result['success']) {
+            echo '<div class="notice notice-success"><p>✅ Certificate generated and issued! Email sent to student.</p></div>';
+        } else {
+            echo '<div class="notice notice-error"><p>❌ ' . esc_html($result['error']) . '</p></div>';
+        }
+    }
+
     if (isset($_GET['action']) && isset($_GET['cert_id']) && $_GET['action'] !== 'view') {
         check_admin_referer('ofst_cert_action_' . $_GET['cert_id']);
 
         $cert_id = absint($_GET['cert_id']);
         $action = sanitize_text_field($_GET['action']);
 
-        if ($action === 'approve') {
-            // Handle file upload if present
-            $uploaded_file = isset($_FILES['certificate_pdf']) ? $_FILES['certificate_pdf'] : null;
-            ofst_cert_approve_request($cert_id, $uploaded_file);
-            echo '<div class="notice notice-success"><p>Certificate approved and issued! Email sent to student.</p></div>';
+        if ($action === 'approve-quick') {
+            // Quick approve with today's date
+            $result = ofst_cert_approve_request($cert_id, date('Y-m-d'));
+            if ($result['success']) {
+                echo '<div class="notice notice-success"><p>✅ Certificate generated and issued! Email sent to student.</p></div>';
+            } else {
+                echo '<div class="notice notice-error"><p>❌ ' . esc_html($result['error']) . '</p></div>';
+            }
         } elseif ($action === 'reject') {
             $reason = isset($_GET['reason']) ? sanitize_text_field($_GET['reason']) : 'Not specified';
             ofst_cert_reject_request($cert_id, $reason);
@@ -256,43 +286,46 @@ function ofst_cert_admin_dashboard()
                             </tr>
                         </table>
 
-                        <h3>Upload Certificate PDF</h3>
-                        <form id="upload-cert-form" method="post" enctype="multipart/form-data"
-                            action="?page=ofst-certificates&action=approve&cert_id=<?php echo $cert->id; ?>&_wpnonce=<?php echo wp_create_nonce('ofst_cert_action_' . $cert->id); ?>">
+                        <h3>🎨 Generate & Issue Certificate</h3>
+                        <form id="approve-cert-form" method="post">
+                            <?php wp_nonce_field('ofst_cert_approve_' . $cert->id); ?>
+                            <input type="hidden" name="cert_id" value="<?php echo $cert->id; ?>">
 
                             <table class="form-table">
                                 <tr>
-                                    <th>Certificate PDF:</th>
+                                    <th>Completion Date:</th>
                                     <td>
-                                        <input type="file" name="certificate_pdf" id="certificate_pdf" accept=".pdf" required>
-                                        <p class="description">Upload the designed certificate PDF (Max 10MB). Required to approve and issue certificate.</p>
+                                        <input type="date" name="completion_date" id="completion_date"
+                                            value="<?php echo $cert->completion_date ? esc_attr($cert->completion_date) : date('Y-m-d'); ?>"
+                                            required>
+                                        <p class="description">Date to show on the certificate (when the student completed the course).</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Instructor:</th>
+                                    <td>
+                                        <?php
+                                        $instructor_name = ofst_cert_get_instructor_name($cert->product_id, $cert->vendor_id);
+                                        echo '<strong>' . esc_html($instructor_name) . '</strong>';
+                                        ?>
+                                        <p class="description">Auto-detected from course/product author.</p>
                                     </td>
                                 </tr>
                             </table>
 
                             <p>
-                                <button type="submit" class="button button-primary button-large"
-                                    onclick="return confirm('Upload this certificate and issue to student?')">
-                                    📤 Upload & Approve Certificate
+                                <button type="submit" name="ofst_approve_cert" class="button button-primary button-large"
+                                    onclick="return confirm('Generate certificate and send to student?')">
+                                    ✅ Generate & Issue Certificate
                                 </button>
                                 <a href="#" onclick="rejectCertificate(<?php echo $cert->id; ?>); return false;" class="button button-large">Reject Request</a>
                                 <a href="?page=ofst-certificates" class="button button-large">Close</a>
                             </p>
                         </form>
 
-                        <hr style="margin: 20px 0;">
-
-                        <p style="color: #666; font-size: 13px;">
-                            <strong>Alternative:</strong> Approve without uploading now - you can upload later from the Issued Certificates page.
-                        </p>
-
-                        <p>
-                            <a href="?page=ofst-certificates&action=approve&cert_id=<?php echo $cert->id; ?>&_wpnonce=<?php echo wp_create_nonce('ofst_cert_action_' . $cert->id); ?>"
-                                class="button"
-                                onclick="return confirm('Approve without uploading certificate PDF? You can upload it later.')">
-                                Approve Without PDF
-                            </a>
-                        </p>
+                        <div style="margin-top: 20px; padding: 15px; background: #f0f0f1; border-left: 4px solid #2271b1;">
+                            <strong>ℹ️ Auto-Generation:</strong> The certificate will be automatically generated using the template with the student's details overlaid.
+                        </div>
                     </div>
                 </div>
         <?php endif;
@@ -345,11 +378,13 @@ function ofst_cert_admin_dashboard()
 
         .ofst-cert-modal-content {
             background-color: #fff;
-            margin: 5% auto;
+            margin: 2% auto;
             padding: 30px;
             border: 1px solid #888;
             width: 80%;
             max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
             border-radius: 8px;
         }
 
@@ -369,9 +404,13 @@ function ofst_cert_admin_dashboard()
 }
 
 /**
- * Approve certificate request
+ * Approve certificate request - AUTO-GENERATES certificate
+ * 
+ * @param int $request_id The request ID to approve
+ * @param string $completion_date The completion date (Y-m-d format)
+ * @return array ['success' => bool, 'error' => string]
  */
-function ofst_cert_approve_request($request_id, $uploaded_file = null)
+function ofst_cert_approve_request($request_id, $completion_date = null)
 {
     global $wpdb;
     $table = $wpdb->prefix . 'ofst_cert_requests';
@@ -379,75 +418,61 @@ function ofst_cert_approve_request($request_id, $uploaded_file = null)
     $request = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $request_id));
 
     if (!$request) {
-        return false;
+        return ['success' => false, 'error' => 'Request not found'];
     }
 
-    $certificate_file_path = null;
-
-    // Handle file upload if provided
-    if ($uploaded_file && isset($uploaded_file['tmp_name']) && !empty($uploaded_file['tmp_name'])) {
-        // Validate file type
-        $allowed_types = array('application/pdf');
-        $file_type = $uploaded_file['type'];
-
-        if (!in_array($file_type, $allowed_types)) {
-            wp_die('Invalid file type. Only PDF files are allowed.');
-        }
-
-        // Validate file size (max 10MB)
-        $max_size = 10 * 1024 * 1024; // 10MB
-        if ($uploaded_file['size'] > $max_size) {
-            wp_die('File too large. Maximum size is 10MB.');
-        }
-
-        // Create certificates directory if it doesn't exist
-        $upload_dir = wp_upload_dir();
-        $cert_dir = $upload_dir['basedir'] . '/certificates/';
-
-        if (!file_exists($cert_dir)) {
-            wp_mkdir_p($cert_dir);
-            // Add index.php to prevent directory listing
-            file_put_contents($cert_dir . '/index.php', '<?php // Silence is golden');
-        }
-
-        // Generate secure filename
-        $file_extension = pathinfo($uploaded_file['name'], PATHINFO_EXTENSION);
-        $safe_filename = sanitize_file_name($request->certificate_id . '-' . time() . '.' . $file_extension);
-        $file_path = $cert_dir . $safe_filename;
-
-        // Move uploaded file
-        if (move_uploaded_file($uploaded_file['tmp_name'], $file_path)) {
-            $certificate_file_path = $upload_dir['baseurl'] . '/certificates/' . $safe_filename;
-        } else {
-            wp_die('Failed to upload certificate file. Please try again.');
-        }
+    // Use today's date if not provided
+    if (!$completion_date) {
+        $completion_date = date('Y-m-d');
     }
 
-    // Update status to issued
-    $update_data = array(
-        'status' => 'issued',
-        'processed_date' => current_time('mysql'),
-        'processed_by' => get_current_user_id()
-    );
-
-    if ($certificate_file_path) {
-        $update_data['certificate_file'] = $certificate_file_path;
-    }
-
+    // Update completion date in the request
     $wpdb->update(
         $table,
-        $update_data,
-        array('id' => $request_id)
+        ['completion_date' => $completion_date],
+        ['id' => $request_id]
     );
 
-    // Get updated request data
+    // Refresh request data
+    $request = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $request_id));
+
+    // Generate certificate automatically
+    $gen_result = ofst_cert_generate_certificate($request, $completion_date);
+
+    if (!$gen_result['success']) {
+        // Log generation failure
+        ofst_cert_log_generation_failure($request_id, $gen_result['error']);
+        return ['success' => false, 'error' => 'Certificate generation failed: ' . $gen_result['error']];
+    }
+
+    // Update status to issued with certificate file
+    $wpdb->update(
+        $table,
+        [
+            'status' => 'issued',
+            'certificate_file' => $gen_result['file_url'],
+            'processed_date' => current_time('mysql'),
+            'processed_by' => get_current_user_id(),
+            'rejection_reason' => null
+        ],
+        ['id' => $request_id]
+    );
+
+    // Get updated request data for email
     $request = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $request_id));
 
     // Send email to student with certificate
-    ofst_cert_send_certificate_email($request);
+    $email_sent = ofst_cert_send_certificate_email($request);
 
-    return true;
+    if (!$email_sent) {
+        // Log email failure but don't fail the whole process
+        ofst_cert_log_email_failure($request_id, 'Email sending failed');
+        return ['success' => true, 'error' => 'Certificate generated but email failed to send. You can resend from Failed Certificates page.'];
+    }
+
+    return ['success' => true, 'error' => ''];
 }
+
 
 /**
  * Reject certificate request
@@ -478,6 +503,18 @@ function ofst_cert_issued_page()
 {
     global $wpdb;
     $table = $wpdb->prefix . 'ofst_cert_requests';
+
+    // Handle resend email action
+    if (isset($_GET['action']) && $_GET['action'] === 'resend' && isset($_GET['cert_id'])) {
+        check_admin_referer('ofst_resend_email_' . $_GET['cert_id']);
+        $cert_id = absint($_GET['cert_id']);
+        $result = ofst_cert_retry_email($cert_id);
+        if ($result['success']) {
+            echo '<div class="notice notice-success"><p>✅ Email resent successfully!</p></div>';
+        } else {
+            echo '<div class="notice notice-error"><p>❌ ' . esc_html($result['error']) . '</p></div>';
+        }
+    }
 
     $certificates = $wpdb->get_results("SELECT * FROM $table WHERE status = 'issued' ORDER BY processed_date DESC LIMIT 100");
 
@@ -512,10 +549,14 @@ function ofst_cert_issued_page()
                             <td><?php echo date('M d, Y', strtotime($cert->processed_date)); ?></td>
                             <td><?php echo $issued_by ? esc_html($issued_by->display_name) : 'System'; ?></td>
                             <td>
-                                <a href="?page=ofst-certificates&action=view&cert_id=<?php echo $cert->id; ?>" class="button button-small">View</a>
                                 <?php if ($cert->certificate_file): ?>
-                                    <a href="<?php echo esc_url($cert->certificate_file); ?>" class="button button-small" target="_blank">Download PDF</a>
+                                    <a href="<?php echo esc_url($cert->certificate_file); ?>" class="button button-small" target="_blank">View</a>
                                 <?php endif; ?>
+                                <a href="?page=ofst-certificates-issued&action=resend&cert_id=<?php echo $cert->id; ?>&_wpnonce=<?php echo wp_create_nonce('ofst_resend_email_' . $cert->id); ?>"
+                                    class="button button-small"
+                                    onclick="return confirm('Resend certificate email to <?php echo esc_js($cert->email); ?>?')">
+                                    📧 Resend Email
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -525,6 +566,131 @@ function ofst_cert_issued_page()
     </div>
 <?php
 }
+
+/**
+ * Failed Certificates Page
+ * Shows certificates that failed generation or email sending
+ */
+function ofst_cert_failed_page()
+{
+    global $wpdb;
+    $table = $wpdb->prefix . 'ofst_cert_requests';
+
+    // Handle retry actions
+    if (isset($_POST['retry_action']) && isset($_POST['cert_id'])) {
+        check_admin_referer('ofst_retry_action_' . $_POST['cert_id']);
+        $cert_id = absint($_POST['cert_id']);
+        $action = sanitize_text_field($_POST['retry_action']);
+        $completion_date = isset($_POST['completion_date']) ? sanitize_text_field($_POST['completion_date']) : date('Y-m-d');
+
+        if ($action === 'regenerate') {
+            $result = ofst_cert_retry_generation($cert_id, $completion_date);
+            if ($result['success']) {
+                // Try sending email after regeneration
+                $email_result = ofst_cert_retry_email($cert_id);
+                if ($email_result['success']) {
+                    echo '<div class="notice notice-success"><p>✅ Certificate regenerated and email sent successfully!</p></div>';
+                } else {
+                    echo '<div class="notice notice-warning"><p>⚠️ Certificate regenerated but email failed. You can try resending.</p></div>';
+                }
+            } else {
+                echo '<div class="notice notice-error"><p>❌ ' . esc_html($result['error']) . '</p></div>';
+            }
+        } elseif ($action === 'resend') {
+            $result = ofst_cert_retry_email($cert_id);
+            if ($result['success']) {
+                echo '<div class="notice notice-success"><p>✅ Email resent successfully!</p></div>';
+            } else {
+                echo '<div class="notice notice-error"><p>❌ ' . esc_html($result['error']) . '</p></div>';
+            }
+        }
+    }
+
+    // Get failed certificates (generation_failed or email_failed status)
+    $failed = $wpdb->get_results(
+        "SELECT * FROM $table WHERE status IN ('generation_failed', 'email_failed') ORDER BY processed_date DESC"
+    );
+
+?>
+    <div class="wrap">
+        <h1>⚠️ Failed Certificates</h1>
+        <p>Certificates that failed during generation or email sending. You can retry these actions below.</p>
+
+        <?php if (empty($failed)): ?>
+            <div class="notice notice-success">
+                <p>🎉 No failed certificates! All certificates are working properly.</p>
+            </div>
+        <?php else: ?>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th width="130">Certificate ID</th>
+                        <th>Student</th>
+                        <th>Email</th>
+                        <th>Course</th>
+                        <th width="120">Status</th>
+                        <th width="200">Error</th>
+                        <th width="280">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($failed as $cert): ?>
+                        <tr>
+                            <td><strong><?php echo esc_html($cert->certificate_id); ?></strong></td>
+                            <td><?php echo esc_html($cert->first_name . ' ' . $cert->last_name); ?></td>
+                            <td><?php echo esc_html($cert->email); ?></td>
+                            <td><?php echo esc_html($cert->product_name); ?></td>
+                            <td>
+                                <?php if ($cert->status === 'generation_failed'): ?>
+                                    <span style="background: #f8d7da; color: #721c24; padding: 3px 8px; border-radius: 3px; font-size: 11px;">
+                                        Generation Failed
+                                    </span>
+                                <?php else: ?>
+                                    <span style="background: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 3px; font-size: 11px;">
+                                        Email Failed
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <small><?php echo esc_html(substr($cert->rejection_reason, 0, 100)); ?></small>
+                            </td>
+                            <td>
+                                <form method="post" style="display: inline-flex; gap: 5px; align-items: center;">
+                                    <?php wp_nonce_field('ofst_retry_action_' . $cert->id); ?>
+                                    <input type="hidden" name="cert_id" value="<?php echo $cert->id; ?>">
+
+                                    <?php if ($cert->status === 'generation_failed'): ?>
+                                        <input type="date" name="completion_date" value="<?php echo date('Y-m-d'); ?>" style="width: 130px;">
+                                        <button type="submit" name="retry_action" value="regenerate" class="button button-primary button-small">
+                                            🔄 Regenerate
+                                        </button>
+                                    <?php else: ?>
+                                        <button type="submit" name="retry_action" value="resend" class="button button-primary button-small">
+                                            📧 Resend Email
+                                        </button>
+                                        <button type="submit" name="retry_action" value="regenerate" class="button button-small"
+                                            onclick="return confirm('This will regenerate the certificate. Continue?')">
+                                            🔄 Regenerate
+                                        </button>
+                                        <input type="hidden" name="completion_date" value="<?php echo $cert->completion_date ?: date('Y-m-d'); ?>">
+                                    <?php endif; ?>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
+
+    <style>
+        .ofst-failed-table td {
+            vertical-align: middle;
+        }
+    </style>
+<?php
+}
+
 
 /**
  * Verification Log Page

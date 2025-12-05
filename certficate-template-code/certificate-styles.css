@@ -1,0 +1,416 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #1a1a2e;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.certificate-wrapper {
+    width: 100%;
+    max-width: 900px;
+}
+
+.certificate {
+    position: relative;
+    background: linear-gradient(135deg, #1e1e3f 0%, #2d1b4e 50%, #1e1e3f 100%);
+    border: 3px solid #c9a227;
+    border-radius: 8px;
+    padding: 50px 60px;
+    min-height: 600px;
+    overflow: hidden;
+}
+
+/* Corner Decorations */
+.corner-decoration {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+}
+
+.corner-decoration.top-right {
+    top: 0;
+    right: 0;
+}
+
+.corner-decoration.bottom-right {
+    bottom: 0;
+    right: 0;
+    transform: scaleY(-1);
+}
+
+.corner-stripe {
+    position: absolute;
+    width: 200px;
+    height: 25px;
+    transform-origin: top right;
+}
+
+.corner-stripe.purple-1 {
+    background: #6b3fa0;
+    top: 20px;
+    right: -40px;
+    transform: rotate(45deg);
+}
+
+.corner-stripe.gold-1 {
+    background: linear-gradient(90deg, #c9a227, #f4d03f, #c9a227);
+    top: 45px;
+    right: -40px;
+    transform: rotate(45deg);
+}
+
+.corner-stripe.purple-2 {
+    background: #6b3fa0;
+    top: 70px;
+    right: -40px;
+    transform: rotate(45deg);
+}
+
+/* Left Border Decoration */
+.left-border {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 70%;
+}
+
+.diamond-pattern {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: space-between;
+}
+
+.diamond {
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(135deg, #c9a227, #f4d03f);
+    transform: rotate(45deg);
+}
+
+.line {
+    width: 2px;
+    height: 40px;
+    background: linear-gradient(180deg, #c9a227, #f4d03f);
+}
+
+/* Logo */
+.logo-area {
+    position: absolute;
+    top: 30px;
+    left: 50px;
+    z-index: 10;
+}
+
+.logo-img {
+    width: 80px;
+    height: auto;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Watermark */
+.watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.watermark-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 72px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+    letter-spacing: 8px;
+}
+
+/* Main Content */
+.main-content {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding-top: 20px;
+}
+
+.title-area {
+    margin-bottom: 25px;
+}
+
+.title {
+    font-family: 'Playfair Display', serif;
+    font-size: 56px;
+    font-weight: 700;
+    color: #c9a227;
+    letter-spacing: 4px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: #ffffff;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+}
+
+.certifies-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    color: #cccccc;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+}
+
+.recipient-name {
+    font-family: 'Great Vibes', cursive;
+    font-size: 52px;
+    color: #ffffff;
+    margin-bottom: 15px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Gold Divider */
+.gold-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px auto;
+    max-width: 300px;
+}
+
+.divider-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #c9a227, transparent);
+}
+
+.divider-diamond {
+    width: 8px;
+    height: 8px;
+    background: #c9a227;
+    transform: rotate(45deg);
+}
+
+/* Course Details */
+.course-details {
+    margin-top: 20px;
+}
+
+.course-intro {
+    font-size: 13px;
+    color: #aaaaaa;
+    margin-bottom: 10px;
+}
+
+.course-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: #c9a227;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.course-date {
+    font-size: 14px;
+    color: #cccccc;
+}
+
+/* Certificate Number */
+.cert-number-area {
+    position: absolute;
+    bottom: 25px;
+    left: 50px;
+    text-align: left;
+}
+
+.cert-label {
+    display: block;
+    font-size: 10px;
+    color: #888888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.cert-number {
+    font-size: 12px;
+    color: #c9a227;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* Footer Area */
+.footer-area {
+    position: relative;
+    z-index: 5;
+    margin-top: 40px;
+}
+
+.signatures {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 60px;
+}
+
+.signature-block {
+    text-align: center;
+    min-width: 150px;
+}
+
+.signature-name {
+    font-size: 12px;
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #c9a227;
+    margin-bottom: 5px;
+}
+
+.signature-title {
+    font-size: 10px;
+    color: #888888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Gold Seal */
+.seal-wrapper {
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+.gold-seal {
+    width: 70px;
+    height: 70px;
+    background: radial-gradient(circle, #f4d03f 0%, #c9a227 50%, #a67c00 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 4px 15px rgba(201, 162, 39, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 2;
+}
+
+.seal-inner {
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle, #a67c00 0%, #c9a227 100%);
+    border-radius: 50%;
+    border: 2px solid #f4d03f;
+}
+
+.ribbon {
+    position: absolute;
+    bottom: -15px;
+    width: 25px;
+    height: 40px;
+    z-index: 1;
+}
+
+.ribbon-left {
+    left: 5px;
+    background: linear-gradient(180deg, #c9a227, #a67c00);
+    transform: rotate(-15deg);
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+}
+
+.ribbon-right {
+    right: 5px;
+    background: linear-gradient(180deg, #c9a227, #a67c00);
+    transform: rotate(15deg);
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+}
+
+/* QR Code */
+.qr-area {
+    position: absolute;
+    bottom: 20px;
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.qr-box {
+    width: 60px;
+    height: 60px;
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.qr-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.scan-text {
+    font-size: 10px;
+    color: #888888;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .certificate {
+        padding: 30px 20px;
+    }
+    
+    .title {
+        font-size: 36px;
+    }
+    
+    .subtitle {
+        font-size: 16px;
+    }
+    
+    .recipient-name {
+        font-size: 36px;
+    }
+    
+    .signatures {
+        flex-direction: column;
+        gap: 30px;
+        align-items: center;
+    }
+    
+    .corner-decoration {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .left-border {
+        display: none;
+    }
+}
