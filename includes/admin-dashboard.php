@@ -105,10 +105,16 @@ function ofst_cert_admin_dashboard()
         $result = ofst_cert_approve_request($cert_id, $completion_date);
 
         if ($result['success']) {
-            echo '<div class="notice notice-success"><p>✅ Certificate generated and issued! Email sent to student.</p></div>';
+            // Redirect to avoid resubmission and close modal
+            echo '<script>window.location.href="admin.php?page=ofst-certificates&message=approved";</script>';
+            exit;
         } else {
             echo '<div class="notice notice-error"><p>❌ ' . esc_html($result['error']) . '</p></div>';
         }
+    }
+
+    if (isset($_GET['message']) && $_GET['message'] === 'approved') {
+        echo '<div class="notice notice-success"><p>✅ Certificate generated and issued! Email sent to student.</p></div>';
     }
 
     if (isset($_GET['action']) && isset($_GET['cert_id']) && $_GET['action'] !== 'view') {
@@ -214,9 +220,9 @@ function ofst_cert_admin_dashboard()
                                 <td><?php echo date('M d, Y', strtotime($req->requested_date)); ?></td>
                                 <td>
                                     <a href="?page=ofst-certificates&action=view&cert_id=<?php echo $req->id; ?>" class="button button-small">View</a>
-                                    <a href="?page=ofst-certificates&action=approve&cert_id=<?php echo $req->id; ?>&_wpnonce=<?php echo wp_create_nonce('ofst_cert_action_' . $req->id); ?>"
+                                    <a href="?page=ofst-certificates&action=approve-quick&cert_id=<?php echo $req->id; ?>&_wpnonce=<?php echo wp_create_nonce('ofst_cert_action_' . $req->id); ?>"
                                         class="button button-primary button-small"
-                                        onclick="return confirm('Approve this certificate request?')">Approve</a>
+                                        onclick="return confirm('Approve this certificate request?')">Quick Approve</a>
                                     <a href="#" onclick="rejectCertificate(<?php echo $req->id; ?>); return false;" class="button button-small">Reject</a>
                                 </td>
                             </tr>
@@ -289,6 +295,7 @@ function ofst_cert_admin_dashboard()
                         <h3>🎨 Generate & Issue Certificate</h3>
                         <form id="approve-cert-form" method="post">
                             <?php wp_nonce_field('ofst_cert_approve_' . $cert->id); ?>
+                            <input type="hidden" name="ofst_approve_cert" value="1">
                             <input type="hidden" name="cert_id" value="<?php echo $cert->id; ?>">
 
                             <table class="form-table">
@@ -467,7 +474,7 @@ function ofst_cert_approve_request($request_id, $completion_date = null)
     if (!$email_sent) {
         // Log email failure but don't fail the whole process
         ofst_cert_log_email_failure($request_id, 'Email sending failed');
-        return ['success' => true, 'error' => 'Certificate generated but email failed to send. You can resend from Failed Certificates page.'];
+        return ['success' => true, 'error' => 'Certificate generated but email failed. You can resend from Failed Certificates page.'];
     }
 
     return ['success' => true, 'error' => ''];
@@ -521,6 +528,7 @@ function ofst_cert_issued_page()
 ?>
     <div class="wrap">
         <h1>Issued Certificates</h1>
+        <p><a href="?page=ofst-certificates" class="button">← Back to Dashboard</a></p>
 
         <?php if (empty($certificates)): ?>
             <div class="notice notice-info">
@@ -614,6 +622,7 @@ function ofst_cert_failed_page()
 ?>
     <div class="wrap">
         <h1>⚠️ Failed Certificates</h1>
+        <p><a href="?page=ofst-certificates" class="button">← Back to Dashboard</a></p>
         <p>Certificates that failed during generation or email sending. You can retry these actions below.</p>
 
         <?php if (empty($failed)): ?>
@@ -705,6 +714,7 @@ function ofst_cert_verification_log()
 ?>
     <div class="wrap">
         <h1>Certificate Verification Log</h1>
+        <p><a href="?page=ofst-certificates" class="button">← Back to Dashboard</a></p>
 
         <?php if (empty($logs)): ?>
             <div class="notice notice-info">

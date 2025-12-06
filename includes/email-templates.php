@@ -160,12 +160,12 @@ function ofst_cert_send_certificate_email($request)
                 <strong>Issued Date:</strong> " . date('F d, Y') . "
             </div>";
 
-    // Add download link if certificate file exists
+    // Add view link if certificate file exists
     if (!empty($request->certificate_file)) {
         $message .= "
             <p><a href='{$request->certificate_file}' 
                style='display: inline-block; padding: 12px 24px; background: #070244; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold;'>
-               Download Your Certificate
+               View & Print Certificate
             </a></p>";
     }
 
@@ -188,10 +188,17 @@ function ofst_cert_send_certificate_email($request)
         'From: ' . ofst_cert_get_setting('from_name') . ' <' . ofst_cert_get_setting('from_email') . '>'
     );
 
-    // Attach certificate file if it exists
+    // Attach certificate file if it exists and is NOT an HTML file (only attach PDFs/Images if we ever switch back)
     $attachments = array();
-    if (!empty($request->certificate_file) && file_exists($request->certificate_file)) {
-        $attachments[] = $request->certificate_file;
+    if (!empty($request->certificate_file)) {
+        // Convert URL to local path for attachment
+        $upload_dir = wp_upload_dir();
+        $local_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $request->certificate_file);
+
+        $ext = pathinfo($local_path, PATHINFO_EXTENSION);
+        if (file_exists($local_path) && strtolower($ext) !== 'html') {
+            $attachments[] = $local_path;
+        }
     }
 
     return wp_mail($request->email, $subject, $message, $headers, $attachments);

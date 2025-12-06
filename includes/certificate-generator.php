@@ -29,15 +29,6 @@ function ofst_cert_generate_certificate($request, $completion_date)
             file_put_contents($cert_dir . 'index.php', '<?php // Silence is golden');
         }
 
-        // Generate QR code first
-        $verification_url = site_url('/verify-certificate/?cert_id=' . $request->certificate_id);
-        $qr_filename = 'qr-' . $request->certificate_id . '.png';
-        $qr_path = $cert_dir . $qr_filename;
-
-        // Generate QR code
-        QRcode::png($verification_url, $qr_path, QR_ECLEVEL_M, 6, 2);
-        $qr_url = $upload_dir['baseurl'] . '/certificates/' . $qr_filename;
-
         // Prepare data
         $student_name = $request->first_name . ' ' . $request->last_name;
         $course_name = $request->product_name;
@@ -46,8 +37,11 @@ function ofst_cert_generate_certificate($request, $completion_date)
         $instructor_name = ofst_cert_get_instructor_name($request->product_id, $request->vendor_id);
         $company_name = ofst_cert_get_setting('company_name', 'Ofastshop Digitals');
 
-        // Logo URL
-        $logo_url = 'https://pub-f02915809d3846b8ab0aaedeab54dbf7.r2.dev/2024/07/26171047/cropped-cropped-OFASTSHOP-DIGITALS-e1728849768928.png';
+        // Logo and background URLs
+        $logo_url = 'https://pub-f02915809d3846b8ab0aaedeab54dbf7.r2.dev/ofastshop/web/2025/12/06071050/ofastlogo2.webp';
+
+        // Static QR Code URL (as requested)
+        $qr_url = 'https://pub-f02915809d3846b8ab0aaedeab54dbf7.r2.dev/ofastshop/web/2025/12/05140249/Ofastshop_Certificate-1024.webp';
 
         // Generate HTML certificate
         $html = ofst_cert_generate_html(
@@ -114,6 +108,7 @@ body {
 .certificate-wrapper {
     width: 100%;
     max-width: 900px;
+    position: relative;
 }
 
 .certificate {
@@ -124,6 +119,37 @@ body {
     padding: 50px 60px;
     min-height: 600px;
     overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Print Button */
+.print-btn-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.print-btn {
+    background: #c9a227;
+    color: #1a1a2e;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(201, 162, 39, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.print-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(201, 162, 39, 0.6);
 }
 
 /* Corner Decorations */
@@ -444,17 +470,85 @@ body {
 
 /* Print styles */
 @media print {
+    @page {
+        size: landscape;
+        margin: 0;
+    }
+    
     body {
         background: none;
         padding: 0;
+        display: block;
     }
+    
     .certificate-wrapper {
+        width: 100%;
         max-width: none;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .certificate {
+        width: 100%;
+        height: 100%;
+        border: none;
+        box-shadow: none;
+        /* Force background printing */
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .print-btn-container {
+        display: none;
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 900px) {
+    body {
+        display: block;
+        padding: 10px;
+        overflow-x: hidden;
+    }
+
+    .certificate-wrapper {
+        transform-origin: top left;
+        /* Scale down to fit screen width */
+        transform: scale(calc(100vw / 940)); 
+        margin-bottom: calc(100vw * 0.7); /* Reserve space */
+    }
+    
+    .print-btn-container {
+        bottom: 10px;
+        right: 10px;
     }
 }
     </style>
+    <script>
+        // Auto-scale for mobile
+        function scaleCertificate() {
+            if (window.innerWidth < 940) {
+                const wrapper = document.querySelector(".certificate-wrapper");
+                const scale = (window.innerWidth - 20) / 900;
+                wrapper.style.transform = "scale(" + scale + ")";
+                wrapper.style.transformOrigin = "top center";
+                // Adjust body height to fit scaled content
+                document.body.style.height = (600 * scale + 50) + "px";
+            }
+        }
+        window.addEventListener("resize", scaleCertificate);
+        window.addEventListener("load", scaleCertificate);
+    </script>
 </head>
 <body>
+    <div class="print-btn-container">
+        <button onclick="window.print()" class="print-btn">
+            🖨️ Print / Save as PDF
+        </button>
+    </div>
+
     <div class="certificate-wrapper">
         <div class="certificate">
             <!-- Corner Decorations - Top Right -->
